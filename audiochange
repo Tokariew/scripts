@@ -1,19 +1,18 @@
-#! /bin/sh
+#! /bin/bash
 # This script will change audio output between my X20 dac and built in audio
 # solution in my motherboard
 
 test=$(aplay -l | grep X20)
 test2=$(aplay -l | grep Analog)
 
-if [[ $test ]]; then
+if [[ "$test" ]]; then
     out=$test
-    dev=$(echo $test | awk -F ':' {'print $1'})
-    card=$(echo $test | awk -F ':' {'print $2'} | awk -F ', ' {'print $2'})
 else
     out=$test2
-    dev=$(echo $test2 | awk -F ':' {'print $1'})
-    card=$(echo $test2 | awk -F ':' {'print $2'} | awk -F ', ' {'print $2'})
 fi
+
+dev=$(echo "$out" | awk -F ':' {'print $1'})
+card=$(echo "$out" | awk -F ':' {'print $2'} | awk -F ', ' {'print $2'})
 
 sed -i "3s/.*/$card/" /home/tokariew/.asoundrc
 sed -i "4s/.*/$dev/" /home/tokariew/.asoundrc
