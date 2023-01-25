@@ -1,0 +1,21 @@
+#!/bin/sh
+# Require systemd and qtile.
+# For locking require something like xss-lock
+# Script to give qtile power menu similar to which DE have.
+# Only restart and Logout are custom to qtile.
+
+chosen=$(printf " Reboot PC\n Shutdown PC\n To Uefi\n鈴 Suspend to RAM\n Lock user session\nﰇ Restart qtile\n Logout" | dmenu -i -l 10 -p "Login options" -fn "Monospace-16")
+
+if [ -z "$chosen" ]; then
+    exit 0
+else
+    case $chosen in
+        *Reboot*) systemctl reboot ;;
+        *Shutdown*) systemctl poweroff ;;
+        *Uefi*) systemctl reboot --firmware-setup ;;
+        *Suspend*) systemctl suspend ;;
+        *Lock*) loginctl lock-session ;;
+        Restart*) qtile cmd-obj -o cmd -f restart ;;
+        Logout*) qtile cmd-obj -o cmd -f shutdown ;;
+    esac
+fi
