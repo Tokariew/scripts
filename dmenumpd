@@ -1,0 +1,19 @@
+#!/bin/sh
+# Require ashuffle https://github.com/Joshkunz/ashuffle
+# script to shuffle main directories in mpd
+# in first prompt it will display all folders inside ~/Music directory,
+# and All and kill. All is to shuffle whole library and kill to stop ashuffle.
+# After selecting directory or All it give option to select to shuffle
+# selecting random albums or songs
+
+chosen=$(printf "%s\nAll\nkill" "$(ls ~/Music)" | dmenu -i -fn "monospace-12" -h 24 -p "select folder to shuffle")
+
+if [ -z "$chosen" ]; then
+    exit 0
+else
+    killall ashuffle
+    [ "$chosen" = "kill" ] && exit 0
+    grouping=$(printf "Yes\nNo" | dmenu -i -fn "monospace-12" -h 24 -p "Group by album?")
+    [ "$grouping" = "Yes" ] && test="ashuffle --by-album" || test="ashuffle --queue-buffer 2"
+    { [ "$chosen" = "All" ] && ($test); } || mpc search filename "$chosen" | ($test -f - &)
+fi
