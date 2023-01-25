@@ -1,0 +1,20 @@
+#!/bin/sh
+# script to generate new theme for my WM, terminal, dunst, conky, etc.
+# it using pywal and pywal_steam to generate, require custom templates
+# for pywal
+wal --theme "$1"
+systemctl --user restart dunst.service
+qtile cmd-obj -o cmd -f restart
+cd ~/.config/conky
+cp config.conkyrc config.conkyrc.bkp
+awk -v a='33,34,35,36,37,38,39,40' -v b='1,2,3,4,5,6,7,8' '
+BEGIN { split(a, ax, ","); split(b, bx, ",");
+        for(n in ax) mapping[ bx[n] ] =ax[n];
+};
+NR==FNR { if (FNR in mapping) hold[ mapping[FNR] ]=$0; next; };
+{ print (FNR in hold)? hold[FNR]: $0; }' ~/.cache/wal/conky.lua config.conkyrc.bkp >config.conkyrc
+
+cd ~/gits/others/dmenu
+rm config.h && make -j12
+wal-steam -w
+xrdb -load ~/.Xresources

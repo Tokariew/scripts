@@ -1,0 +1,4 @@
+#!/bin/sh
+# simple script to backup spinning disk to iso, with a nice progress bar
+size=$(du -sb "$(findmnt /dev/sr0 -o TARGET | tail -n 1)" | awk '{print $1}')
+pv /dev/sr0 -perb -s "$size" >"$1"

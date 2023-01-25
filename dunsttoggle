@@ -1,0 +1,2 @@
+#!/bin/sh
+dunstctl set-paused toggle && $(dunstctl is-paused) && dunstify returned

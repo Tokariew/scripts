@@ -1,0 +1,20 @@
+#!/bin/sh
+# script to generate pixelated image of current desktop and set it as lockscreen
+# with i3lock, additionally it pause dunst.
+. ~/.cache/wal/colors2.sh
+maim -uB -m 1 /tmp/screen.png
+convert /tmp/screen.png -scale 5% -scale 2000% /tmp/screen.png
+dunstctl set-paused true
+i3lock -nuki /tmp/screen.png \
+    --time-color="$color7" \
+    --time-font="Fira Code:style=Bold" \
+    --time-size=72 \
+    --timeoutline-color="$background" \
+    --timeoutline-width=1 \
+    --date-color="$color4" \
+    --date-font="Fira Code:style=Bold" \
+    --date-size=24 \
+    --date-str="%A %Y-%m-%d" \
+    --dateoutline-color="$background" \
+    --dateoutline-width=1
+dunstctl set-paused false
