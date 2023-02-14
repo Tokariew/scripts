@@ -1,0 +1,31 @@
+#!/bin/sh
+# script to send email using msmtp/sendmail, when systemd service fail.
+# it use default msmtp account
+# change $tomail variable to your email
+
+today=$(date)
+service_name=$(echo "$1" | sed 's/^mail@//')
+failed=$(systemctl --user status "$service_name")
+tomail="example@example.com"
+
+cat <<EOF >/tmp/mail.txt
+To: $tomail
+Subject: Systemd Service Failed: $service_name
+
+Hi,
+
+The $service_name systemd unit failed to start on $today.
+
+Here are the details of the failure:
+
+\`\`\`
+$failed
+\`\`\`
+
+Please investigate and resolve the issue as soon as possible.
+
+Best regards,
+Your Systemd Service
+EOF
+
+sendmail -t </tmp/mail.txt
