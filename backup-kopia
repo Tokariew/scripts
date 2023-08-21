@@ -1,0 +1,54 @@
+#!/bin/bash
+#
+# backup bunch of directories to the cloud and my nas
+# dependencies: kopia ludusavi rclone pass python-slugify dunstify
+
+GREEN='\033[0;32m'
+NC='\033[0m'
+
+function perform_backup() {
+    local repo_type="$1"
+    local remote_path="$2"
+    local source_path="$3"
+    local bkp_location
+    local last_bkp
+    local bkp_time
+    bkp_location="$(echo "$remote_path" | cut -d ':' -f 1)"
+    slugged="$(slugify "$bkp_location" "$source_path")"
+    last_bkp="$XDG_CACHE_HOME/kopia-bkp/$slugged"
+    mkdir -p "$XDG_CACHE_HOME/kopia-bkp/"
+    if [[ -e $last_bkp ]]; then
+        current_time=$(date +%s)
+        bkp_time="$(stat -c %Y "$last_bkp")"
+        time_diff=$((current_time - bkp_time))
+        if [ "$time_diff" -le 86400 ]; then
+            dunstify "Backup" \
+                "Skipping bkp creation of $source_path to $bkp_location"
+            return 0
+        fi
+    fi
+
+    if [[ $repo_type == "filesystem" ]]; then
+        switch="--path"
+    else
+        switch="--remote-path"
+    fi
+    if (kopia repository connect "$repo_type" "$switch"="$remote_path" -p \
+        "$(pass borg)"); then
+        printf "$GREEN Backuping %s to %s $NC\n" "$source_path" "$bkp_location"
+        kopia snapshot create "$source_path"
+        kopia repository disconnect
+        dunstify "Backup" "Successful Backup of $source_path to $bkp_location"
+        touch "$last_bkp"
+    else
+        dunstify -u Crit "Backup" \
+            "Failed to do backup of $source_path to $bkp_location"
+    fi
+}
+ludusavi backup --format zip --full-limit 1 --differential-limit 2 \
+    --compression-level 19 --compression zstd --force
+perform_backup "filesystem" "/media/nfs/Backups/BackupHome/" "$HOME"
+perform_backup "rclone" "gdriveDpriv:mail" "$HOME/.local/share/mail/"
+perform_backup "rclone" "meganzpriv:pictures" "/media/nvme/Documents/Pictures/"
+perform_backup "rclone" "meganzpriv:mail" "$HOME/.local/share/mail/"
+perform_backup "rclone" "meganzpriv:home" "$HOME"
