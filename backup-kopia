@@ -13,15 +13,16 @@ function perform_backup() {
     local bkp_location
     local last_bkp
     local bkp_time
+    local slugged
     bkp_location="$(echo "$remote_path" | cut -d ':' -f 1)"
     slugged="$(slugify "$bkp_location" "$source_path")"
     last_bkp="$XDG_CACHE_HOME/kopia-bkp/$slugged"
     mkdir -p "$XDG_CACHE_HOME/kopia-bkp/"
-    if [[ -e $last_bkp ]]; then
+    if [[ -e $last_bkp ]]; then # if first time don't bother to check time
         current_time=$(date +%s)
         bkp_time="$(stat -c %Y "$last_bkp")"
         time_diff=$((current_time - bkp_time))
-        if [ "$time_diff" -le 86400 ]; then
+        if [ "$time_diff" -le 86400 ]; then # if last_bkp was less than 24h skip
             dunstify "Backup" \
                 "Skipping bkp creation of $source_path to $bkp_location"
             return 0
@@ -33,6 +34,8 @@ function perform_backup() {
     else
         switch="--remote-path"
     fi
+    # check if connection was successful rclone can fail to connect
+    # if failed just continue to next and send notification
     if (kopia repository connect "$repo_type" "$switch"="$remote_path" -p \
         "$(pass borg)"); then
         printf "$GREEN Backuping %s to %s $NC\n" "$source_path" "$bkp_location"
